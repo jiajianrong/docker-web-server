@@ -1,0 +1,51 @@
+
+version: '3'
+
+services:
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+    depends_on:
+      - nodejs
+    networks:
+      - webnet
+    restart: always
+    # Nginx 配置卷，假设您已经有一个 nginx.conf 文件在同级目录下
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf  # 挂载自定义的 Nginx 配置文件到容器内
+      - /var/log/nginx:/var/log/nginx       # 挂载宿主机的日志目录到容器内
+
+  nodejs:
+    image: node:16
+    expose:
+      - "6001"
+    networks:
+      - webnet
+    restart: always
+    working_dir: /app
+    command: "node server.js"
+    environment:
+      - MYSQL_HOST=mysql
+    # Node.js 源代码卷，假设您的 Node.js 代码在同级目录的 app 文件夹中
+    volumes:
+      - ./app:/app             # 将宿主机上的 Node.js 代码挂载到容器中的 /app 目录
+      - /var/log/nodejs:/app/logs  # 将宿主机上的日志目录挂载到容器内的 /app/logs 目录
+
+  mysql:
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: example
+      MYSQL_DATABASE: mydb
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    volumes:
+      - /var/lib/mysql:/var/lib/mysql
+      - /var/log/mysql:/var/log/mysql
+    networks:
+      - webnet
+    restart: always
+
+networks:
+  webnet:
+
